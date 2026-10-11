@@ -120,7 +120,7 @@ working. Sending a message clears the banner.
 ## Install
 
 ```sh
-bb plugin install git:https://github.com/MacHatter1/bb-plugin-followups --yes
+bb plugin install git:https://github.com/marospekarik/bb-plugin-followups --yes
 ```
 
 Follow-ups appear the next time a thread finishes. They use BB's primary
@@ -130,7 +130,7 @@ default model until you pick one.
 <summary><b>Install from a local clone</b></summary>
 
 ```sh
-git clone https://github.com/MacHatter1/bb-plugin-followups
+git clone https://github.com/marospekarik/bb-plugin-followups
 cd bb-plugin-followups
 npm install && bb plugin build
 bb plugin install path:$PWD --yes
@@ -141,8 +141,7 @@ bb plugin install path:$PWD --yes
 **Requirements**
 
 - bb **0.45+** (Plugin SDK 0.6.15+)
-- The repository is private, so the installing machine needs GitHub
-  credentials with access to it.
+- The repository is public, so installing needs no GitHub credentials.
 - A provider BB can run models on. Every suggestion and draft is a short run
   on it, and spends its tokens.
 
