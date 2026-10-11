@@ -27,6 +27,14 @@ Pick one for a ready-to-send draft. Nothing is ever sent for you.
 > [!NOTE]
 > The screenshots are real BB captures populated with fictional demo data.
 
+> [!NOTE]
+> This is a personal fork of
+> [MacHatter1/bb-plugin-followups](https://github.com/MacHatter1/bb-plugin-followups),
+> used as the installed source on one host so that local changes are not lost to
+> upstream updates. Install it with
+> `bb plugin install git:https://github.com/marospekarik/bb-plugin-followups`.
+> The upstream project keeps the canonical history.
+
 ## The problem
 
 An agent finishes. Its answer ends with "Want me to add a test?", or mentions
