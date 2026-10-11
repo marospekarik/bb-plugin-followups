@@ -10,7 +10,7 @@
 // follow-ups on message.queued/dispatched, so this component simply
 // disappears on the next refresh.
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import {
   definePluginApp,
   experimental_ProviderModelPicker as ProviderModelPicker,
@@ -62,6 +62,58 @@ const EXPANDED_KEY = "followups:expanded";
  */
 const GRID =
   "grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(21rem,1fr))]";
+
+/**
+ * The banner's header row: the fold control, the count of follow-ups, a status
+ * line and the trailing buttons. Both the working placeholder and the ready
+ * grid use it, so a folded banner looks and behaves the same while follow-ups
+ * are being found as after they arrive - folding it hides the placeholder tiles
+ * too, not just the finished ones.
+ */
+function BannerHeader({
+  expanded,
+  count,
+  status,
+  onToggle,
+  children,
+}: {
+  expanded: boolean;
+  count: number | null;
+  status: string;
+  onToggle: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-7 items-center gap-1">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-label={expanded ? "Hide follow-ups" : "Show follow-ups"}
+        onClick={onToggle}
+        className={`flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-foreground/80 hover:bg-state-hover hover:text-foreground ${CONTROL_HOVER_TRANSITION} ${FOCUS_RING}`}
+      >
+        <Glyph icon={GLYPHS.followUps} className="size-3.5 shrink-0 text-muted-foreground" />
+        <span>Follow-ups</span>
+        {count === null ? null : (
+          <span className="rounded-full bg-muted-foreground/15 px-1.5 text-[11px] tabular-nums text-muted-foreground">
+            {count}
+          </span>
+        )}
+        <Icon
+          name={expanded ? "ChevronDown" : "ChevronUp"}
+          className="size-3.5 text-muted-foreground"
+        />
+      </button>
+      <span
+        role="status"
+        className="min-w-0 flex-1 truncate px-1 text-xs text-muted-foreground/70"
+      >
+        {status}
+      </span>
+      {children}
+    </div>
+  );
+}
 
 /** Whether the user unfolded the banner to its tiles (remembered across threads). */
 function readExpanded(): boolean {
@@ -485,25 +537,29 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
 
   if (state.status === "working") {
     // Placeholder tiles hold the space the grid will fill, so the banner
-    // doesn't jump when the suggestions arrive.
+    // doesn't jump when the suggestions arrive. A folded banner stays folded
+    // here: the tiles are part of what the fold hides.
     return (
       <div key="working" className={`px-2.5 pb-2.5 pt-1.5 ${ENTER}`}>
-        <div className="flex min-h-7 items-center gap-1">
-          <span className="flex min-w-0 flex-1 items-center gap-2 px-2 text-xs font-medium text-muted-foreground">
-            <Glyph icon={GLYPHS.followUps} className="size-3.5 shrink-0" />
-            <span role="status">Finding follow-ups…</span>
-          </span>
+        <BannerHeader
+          expanded={expanded}
+          count={null}
+          status="Finding follow-ups…"
+          onToggle={toggleExpanded}
+        >
           <DismissButton label="Stop looking for follow-ups" onClick={dismiss} />
-        </div>
-        <div aria-hidden className={`mt-1 ${GRID}`}>
-          {[0, 1, 2, 3].map((tile) => (
-            <div
-              key={tile}
-              className="h-11 animate-pulse rounded-lg bg-state-hover motion-reduce:animate-none"
-              style={{ animationDelay: `${tile * 120}ms` }}
-            />
-          ))}
-        </div>
+        </BannerHeader>
+        {expanded ? (
+          <div aria-hidden className={`mt-1 ${GRID}`}>
+            {[0, 1, 2, 3].map((tile) => (
+              <div
+                key={tile}
+                className="h-11 animate-pulse rounded-lg bg-state-hover motion-reduce:animate-none"
+                style={{ animationDelay: `${tile * 120}ms` }}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -601,30 +657,12 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
       onKeyDown={onKeyDown}
       className={`px-2.5 pb-2.5 pt-1.5 ${ENTER}`}
     >
-      <div className="flex min-h-7 items-center gap-1">
-        <button
-          type="button"
-          aria-expanded={expanded}
-          aria-label={expanded ? "Hide follow-ups" : "Show follow-ups"}
-          onClick={toggleExpanded}
-          className={`flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-foreground/80 hover:bg-state-hover hover:text-foreground ${CONTROL_HOVER_TRANSITION} ${FOCUS_RING}`}
-        >
-          <Glyph icon={GLYPHS.followUps} className="size-3.5 shrink-0 text-muted-foreground" />
-          <span>Follow-ups</span>
-          <span className="rounded-full bg-muted-foreground/15 px-1.5 text-[11px] tabular-nums text-muted-foreground">
-            {suggestions.length}
-          </span>
-          <Icon
-            name={expanded ? "ChevronDown" : "ChevronUp"}
-            className="size-3.5 text-muted-foreground"
-          />
-        </button>
-        <span
-          role="status"
-          className="min-w-0 flex-1 truncate px-1 text-xs text-muted-foreground/70"
-        >
-          {hint}
-        </span>
+      <BannerHeader
+        expanded={expanded}
+        count={suggestions.length}
+        status={hint}
+        onToggle={toggleExpanded}
+      >
         {busy ? (
           <Button
             type="button"
@@ -637,7 +675,7 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
           </Button>
         ) : null}
         <DismissButton label="Dismiss follow-ups" onClick={dismiss} />
-      </div>
+      </BannerHeader>
       {expanded ? (
         <>
           <ul className={`mt-1 ${GRID}`}>
