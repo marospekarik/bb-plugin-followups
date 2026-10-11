@@ -4,7 +4,14 @@ All notable changes to Followups are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.6.2 - 2026-10-11
+
+### Changed
+
+- The banner opens folded to its header; the tiles appear when you unfold it.
+  The remembered choice is now stored as `followups:expanded`, because the old
+  `followups:collapsed` flag meant the opposite - an existing choice under that
+  key is ignored, so everyone starts folded once.
 
 ## 0.6.1 - 2026-10-09
 

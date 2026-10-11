@@ -49,7 +49,13 @@ const ENTER =
   "animate-in fade-in-0 slide-in-from-bottom-1 duration-200 motion-reduce:animate-none";
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
-const COLLAPSED_KEY = "followups:collapsed";
+/**
+ * Whether the banner is unfolded to its tiles. Follow-ups open folded to their
+ * header; only an explicit un-fold, remembered across threads, shows the tiles.
+ * The key is `expanded` rather than `collapsed` because it inverted meaning when
+ * the banner became folded by default, which also retires old stored choices.
+ */
+const EXPANDED_KEY = "followups:expanded";
 /**
  * Two balanced columns when there's room (a lone fourth tile looks orphaned in three); one when narrow.
  * 21rem lets two fit in BB's 726px message box, whose banner leaves 706px for the grid (22rem needed 710px).
@@ -57,18 +63,18 @@ const COLLAPSED_KEY = "followups:collapsed";
 const GRID =
   "grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(21rem,1fr))]";
 
-/** Whether the user folded the banner down to its header (remembered across threads). */
-function readCollapsed(): boolean {
+/** Whether the user unfolded the banner to its tiles (remembered across threads). */
+function readExpanded(): boolean {
   try {
-    return localStorage.getItem(COLLAPSED_KEY) === "1";
+    return localStorage.getItem(EXPANDED_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-function writeCollapsed(collapsed: boolean): void {
+function writeExpanded(expanded: boolean): void {
   try {
-    localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+    localStorage.setItem(EXPANDED_KEY, expanded ? "1" : "0");
   } catch {
     // Storage unavailable: the choice just lasts until the next reload.
   }
@@ -395,7 +401,7 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
   const memory = useBannerMemory(threadId);
   const { expandingId, draftedId, draftStats } = memory;
   const [notice, setNotice] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [expanded, setExpanded] = useState(readExpanded);
   /** Prefix for the ids that tie each tile to its reason, for screen readers. */
   const idBase = useId();
   /** The row buttons, in order, for arrow-key navigation. */
@@ -546,10 +552,10 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
       ? "Picking one adds it below your draft"
       : "";
 
-  function toggleCollapsed() {
-    const next = !collapsed;
-    setCollapsed(next);
-    writeCollapsed(next);
+  function toggleExpanded() {
+    const next = !expanded;
+    setExpanded(next);
+    writeExpanded(next);
   }
 
   /**
@@ -598,9 +604,9 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
       <div className="flex min-h-7 items-center gap-1">
         <button
           type="button"
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Show follow-ups" : "Hide follow-ups"}
-          onClick={toggleCollapsed}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Hide follow-ups" : "Show follow-ups"}
+          onClick={toggleExpanded}
           className={`flex shrink-0 items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-foreground/80 hover:bg-state-hover hover:text-foreground ${CONTROL_HOVER_TRANSITION} ${FOCUS_RING}`}
         >
           <Glyph icon={GLYPHS.followUps} className="size-3.5 shrink-0 text-muted-foreground" />
@@ -609,7 +615,7 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
             {suggestions.length}
           </span>
           <Icon
-            name={collapsed ? "ChevronUp" : "ChevronDown"}
+            name={expanded ? "ChevronDown" : "ChevronUp"}
             className="size-3.5 text-muted-foreground"
           />
         </button>
@@ -632,7 +638,7 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
         ) : null}
         <DismissButton label="Dismiss follow-ups" onClick={dismiss} />
       </div>
-      {collapsed ? null : (
+      {expanded ? (
         <>
           <ul className={`mt-1 ${GRID}`}>
             {suggestions.map((item, index) => (
@@ -667,7 +673,7 @@ function ThreadFollowups({ threadId }: { threadId: string }) {
             <StatsFooter stats={state.stats} draftStats={busy ? null : draftStats} />
           ) : null}
         </>
-      )}
+      ) : null}
     </div>
   );
 }

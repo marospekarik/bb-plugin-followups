@@ -70,7 +70,8 @@ fills an empty composer, or goes below what you've typed. Slow? Cancel it.
 
 ### ⌨️ Keyboard friendly
 With focus in the banner, the arrow keys move between tiles, 1–9 draft one,
-and Esc returns to the composer. Fold the banner to its header; it remembers.
+and Esc returns to the composer. The banner opens folded to its header; unfold
+it with the chevron and it remembers.
 
 </td>
 <td valign="top">
